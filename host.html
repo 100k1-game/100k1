@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Панель ведущего — Квиз</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body class="host-body">
+  <div class="page-bg"></div>
+
+  <main class="host-layout">
+    <header class="host-header">
+      <div>
+        <div class="hero-badge">5 сентября</div>
+        <h1>Панель ведущего</h1>
+        <p class="hero-sub">День работников нефтяной и газовой промышленности</p>
+      </div>
+      <div class="host-stats">
+        <div class="stat-card">
+          <span class="stat-value" id="statTotal">0</span>
+          <span class="stat-label">Всего</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="statActive">0</span>
+          <span class="stat-label">Проходят</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="statFinished">0</span>
+          <span class="stat-label">Завершили</span>
+        </div>
+        <div class="connection-status" id="connectionStatus">
+          <span class="dot-live"></span> Подключение...
+        </div>
+      </div>
+    </header>
+
+    <section class="card room-banner">
+      <div class="room-info">
+        <span class="room-label">Код комнаты</span>
+        <span class="room-code" id="roomCode">——</span>
+      </div>
+      <a href="#" id="qrLink" class="btn btn-primary">Показать QR для гостей</a>
+    </section>
+
+    <section class="card host-table-card">
+      <div class="table-toolbar">
+        <h2>Участники</h2>
+        <span class="live-badge"><span class="dot-live"></span> Live</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="host-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>ФИО</th>
+              <th>Специальность</th>
+              <th>Баллы</th>
+              <th>Прогресс</th>
+              <th>Статус</th>
+            </tr>
+          </thead>
+          <tbody id="guestsTable">
+            <tr class="empty-row">
+              <td colspan="6">Ожидание участников...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="host-hint">Держите эту вкладку открытой во время квиза — гости подключаются к ней напрямую.</p>
+  </main>
+
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="static/js/questions.js"></script>
+  <script src="static/js/room.js"></script>
+  <script src="static/js/host.js"></script>
+</body>
+</html>

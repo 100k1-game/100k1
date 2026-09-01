@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR-код для гостей</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+  <div class="page-bg"></div>
+
+  <main class="container">
+    <header class="hero">
+      <div class="hero-badge">5 сентября</div>
+      <h1>QR-код<br>для гостей</h1>
+      <p class="hero-sub">Покажите этот код на экране — гости отсканируют и войдут в квиз</p>
+    </header>
+
+    <section class="card qr-card">
+      <div id="qrcode" class="qr-wrap"></div>
+      <p class="qr-url" id="guestUrl"></p>
+      <button class="btn btn-primary btn-full" id="copyBtn">Скопировать ссылку</button>
+    </section>
+
+    <footer class="footer-note">
+      <a href="host.html" id="backLink">← Панель ведущего</a>
+    </footer>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="static/js/room.js"></script>
+  <script src="static/js/qr.js"></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Квиз — Вопросы</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+  <div class="page-bg"></div>
+
+  <main class="container quiz-container">
+    <header class="quiz-header">
+      <div class="quiz-meta">
+        <span id="playerName">—</span>
+        <span class="quiz-meta-sep">·</span>
+        <span id="playerSpecialty">—</span>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <span class="progress-label" id="progressLabel">1 / 10</span>
+      </div>
+    </header>
+
+    <section class="card quiz-card" id="quizCard">
+      <p class="question-number" id="questionNumber">Вопрос 1</p>
+      <h2 class="question-text" id="questionText">Загрузка...</h2>
+      <div class="options" id="optionsList"></div>
+    </section>
+
+    <section class="card result-card" id="resultCard" hidden>
+      <div class="result-icon">✓</div>
+      <h2>Квиз завершён!</h2>
+      <p class="result-score">Ваш результат: <strong id="finalScore">0</strong> из <span id="totalQuestions">10</span></p>
+      <p class="result-note">Результат передан ведущему. Спасибо за участие!</p>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="static/js/questions.js"></script>
+  <script src="static/js/room.js"></script>
+  <script src="static/js/quiz.js"></script>
+</body>
+</html>
