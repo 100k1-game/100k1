@@ -1,11 +1,15 @@
 const room = getRoomFromUrl();
 
-if (!room) {
-  document.querySelector(".qr-card").innerHTML = `
+async function initQr() {
+  if (!room) {
+    document.querySelector(".qr-card").innerHTML = `
     <p style="color:var(--gray-500);margin-bottom:1rem;">Сначала откройте <a href="host.html">панель ведущего</a> — там будет QR-код.</p>
     <a href="host.html" class="btn btn-primary btn-full">Панель ведущего</a>`;
-} else {
-  const guestUrl = guestPageUrl(room);
+    return;
+  }
+
+  const baseUrl = await fetchServerBaseUrl();
+  const guestUrl = guestPageUrl(room, baseUrl);
   document.getElementById("guestUrl").textContent = guestUrl;
 
   new QRCode(document.getElementById("qrcode"), {
@@ -30,8 +34,10 @@ if (!room) {
 
   const backLink = document.getElementById("backLink");
   if (backLink) {
-    const hostUrl = new URL("host.html", window.location.href);
+    const hostUrl = new URL("host.html", baseUrl + "/");
     hostUrl.searchParams.set("room", room);
     backLink.href = hostUrl.href;
   }
 }
+
+initQr();

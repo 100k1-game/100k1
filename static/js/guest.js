@@ -37,9 +37,12 @@ if (!room) {
         );
       }
 
-      const guestId = await joinGuest(room, name, specialty, QUIZ_QUESTIONS.length);
+      const existingId =
+        sessionStorage.getItem("room") === room ? sessionStorage.getItem("guest_id") : null;
 
-      sessionStorage.setItem("guest_id", guestId);
+      const joinData = await joinGuest(room, name, specialty, QUIZ_QUESTIONS.length, existingId);
+
+      sessionStorage.setItem("guest_id", joinData.guest_id);
       sessionStorage.setItem("guest_name", name);
       sessionStorage.setItem("guest_specialty", specialty);
       sessionStorage.setItem("room", room);

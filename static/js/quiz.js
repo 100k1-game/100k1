@@ -28,7 +28,30 @@ const totalQuestionsEl = document.getElementById("totalQuestions");
 const letters = ["A", "B", "C", "D"];
 
 totalQuestionsEl.textContent = questions.length;
-showQuestion();
+
+async function initQuiz() {
+  const guest = await fetchGuestState(room, guestId);
+  if (!guest) {
+    window.location.href = "index.html?room=" + encodeURIComponent(room);
+    return;
+  }
+
+  score = guest.score || 0;
+
+  if (guest.status === "finished") {
+    showFinished();
+    return;
+  }
+
+  const answeredIds = new Set(guest.answered_questions || []);
+  currentIndex = questions.findIndex((q) => !answeredIds.has(q.id));
+  if (currentIndex === -1) {
+    await finishQuiz();
+    return;
+  }
+
+  showQuestion();
+}
 
 function showQuestion() {
   if (currentIndex >= questions.length) {
@@ -66,6 +89,17 @@ async function selectAnswer(index, btn, q) {
     const data = await submitAnswer(room, guestId, q.id, index);
     score = data.score;
     btn.classList.add(data.correct ? "correct" : "incorrect");
+
+    if (data.alreadyAnswered) {
+      const answeredIds = new Set(data.guest?.answered_questions || []);
+      currentIndex = questions.findIndex((question) => !answeredIds.has(question.id));
+      if (currentIndex === -1) {
+        await finishQuiz();
+        return;
+      }
+      setTimeout(() => showQuestion(), 800);
+      return;
+    }
   } catch {
     btn.classList.add("incorrect");
   }
@@ -76,13 +110,20 @@ async function selectAnswer(index, btn, q) {
   }, 800);
 }
 
+function showFinished() {
+  progressFill.style.width = "100%";
+  progressLabel.textContent = `${questions.length} / ${questions.length}`;
+  quizCard.hidden = true;
+  resultCard.hidden = false;
+  finalScore.textContent = score;
+}
+
 async function finishQuiz() {
   progressFill.style.width = "100%";
   progressLabel.textContent = `${questions.length} / ${questions.length}`;
 
   await finishQuizGuest(room, guestId, score, questions.length);
-
-  quizCard.hidden = true;
-  resultCard.hidden = false;
-  finalScore.textContent = score;
+  showFinished();
 }
+
+initQuiz();

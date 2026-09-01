@@ -13,10 +13,9 @@ function createRoomId() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
 }
 
-function guestPageUrl(room) {
-  const url = new URL("index.html", window.location.href);
-  url.searchParams.set("room", room);
-  return url.href;
+function guestPageUrl(room, baseUrl) {
+  const base = (baseUrl || window.location.origin).replace(/\/$/, "");
+  return `${base}/index.html?room=${encodeURIComponent(room)}`;
 }
 
 function qrPageUrl(room) {
@@ -25,7 +24,25 @@ function qrPageUrl(room) {
   return url.href;
 }
 
-async function joinGuest(room, name, specialty, totalQuestions) {
+let cachedBaseUrl = null;
+
+async function fetchServerBaseUrl() {
+  if (cachedBaseUrl) return cachedBaseUrl;
+  try {
+    const res = await fetch(apiUrl("/api/info"));
+    if (res.ok) {
+      const data = await res.json();
+      cachedBaseUrl = data.base_url.replace(/\/$/, "");
+      return cachedBaseUrl;
+    }
+  } catch {
+    /* fallback below */
+  }
+  cachedBaseUrl = window.location.origin;
+  return cachedBaseUrl;
+}
+
+async function joinGuest(room, name, specialty, totalQuestions, guestId = null) {
   const res = await fetch(apiUrl(`/api/room/${encodeURIComponent(room)}/join`), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -33,12 +50,19 @@ async function joinGuest(room, name, specialty, totalQuestions) {
       name,
       specialty,
       total_questions: totalQuestions,
+      guest_id: guestId || undefined,
     }),
   });
 
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Ошибка регистрации");
-  return data.guest_id;
+  return data;
+}
+
+async function fetchGuestState(room, guestId) {
+  const res = await fetch(apiUrl(`/api/room/${encodeURIComponent(room)}/guest/${encodeURIComponent(guestId)}`));
+  if (!res.ok) return null;
+  return res.json();
 }
 
 async function updateGuest(room, guestId, payload) {
@@ -50,21 +74,29 @@ async function updateGuest(room, guestId, payload) {
 }
 
 async function submitAnswer(room, guestId, questionId, answerIndex) {
-  const question = QUIZ_QUESTIONS.find((q) => q.id === questionId);
-  const isCorrect = question && answerIndex === question.correct;
+  const res = await fetch(
+    apiUrl(`/api/room/${encodeURIComponent(room)}/guest/${encodeURIComponent(guestId)}/answer`),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question_id: questionId,
+        answer_index: answerIndex,
+      }),
+    }
+  );
 
-  const res = await fetch(apiUrl(`/api/room/${encodeURIComponent(room)}/guests`));
-  const guests = await res.json();
-  const current = guests.find((g) => g.id === guestId);
-  const score = (current ? current.score : 0) + (isCorrect ? 1 : 0);
+  const data = await res.json();
+  if (!res.ok && res.status !== 409) {
+    throw new Error(data.error || "Ошибка отправки ответа");
+  }
 
-  await updateGuest(room, guestId, {
-    score,
-    current_question: questionId,
-    status: "in_progress",
-  });
-
-  return { correct: isCorrect, score };
+  return {
+    correct: data.correct,
+    score: data.score,
+    alreadyAnswered: res.status === 409,
+    guest: data.guest,
+  };
 }
 
 async function finishQuizGuest(room, guestId, score, totalQuestions) {
