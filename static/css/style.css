@@ -614,6 +614,136 @@ body {
   100% { background: transparent; }
 }
 
+.setup-container {
+  max-width: 560px;
+}
+
+.setup-step {
+  margin-bottom: 1rem;
+}
+
+.setup-step h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.setup-step p {
+  font-size: 0.9rem;
+  color: var(--gray-600);
+  line-height: 1.6;
+}
+
+.setup-step a {
+  color: var(--black);
+}
+
+.code-block {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  padding: 1rem;
+  font-size: 0.8rem;
+  overflow-x: auto;
+  margin-top: 0.75rem;
+}
+
+.setup-links {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1.25rem;
+}
+
+.room-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.room-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.room-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray-400);
+}
+
+.room-code {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--black);
+}
+
+.host-hint {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--gray-400);
+  margin-top: 1.5rem;
+}
+
+.host-nav {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-outline {
+  background: var(--white);
+  color: var(--black);
+  border: 1px solid var(--gray-200);
+  text-decoration: none;
+  font-size: 0.85rem;
+  padding: 0.6rem 1rem;
+}
+
+.btn-outline:hover {
+  border-color: var(--black);
+  background: var(--gray-50);
+}
+
+.qr-card {
+  text-align: center;
+  padding: 2rem;
+}
+
+.qr-wrap {
+  display: inline-flex;
+  padding: 1rem;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  margin-bottom: 1.25rem;
+}
+
+.qr-url {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  word-break: break-all;
+  margin-bottom: 1.25rem;
+}
+
+.footer-note a {
+  color: var(--gray-500);
+  text-decoration: none;
+}
+
+.footer-note a:hover {
+  color: var(--black);
+}
+
 /* ===== Responsive ===== */
 
 @media (max-width: 640px) {
