@@ -4,9 +4,31 @@ if (!room) {
   document.querySelector(".form-card").innerHTML = `
     <h2>Вход в квиз</h2>
     <p style="color:var(--gray-500);font-size:0.9rem;line-height:1.6;margin-bottom:1rem;">
-      Отсканируйте QR-код, который показывает ведущий,<br>или попросите ссылку с кодом комнаты.
+      Отсканируйте QR-код ведущего<br>или введите код комнаты (для iPhone).
     </p>
-    <a href="host.html" class="btn btn-primary btn-full">Я ведущий →</a>`;
+    <form id="roomForm">
+      <div class="field">
+        <label for="roomCode">Код комнаты</label>
+        <input type="text" id="roomCode" name="roomCode" placeholder="Например: 7HB0EJ" required autocomplete="off" style="text-transform:uppercase;">
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Войти →</button>
+    </form>
+    <p style="margin-top:1rem;text-align:center;">
+      <a href="host.html" style="color:var(--gray-500);font-size:0.85rem;">Я ведущий →</a>
+    </p>`;
+
+  document.getElementById("roomForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const code = document.getElementById("roomCode").value.trim().toUpperCase();
+    if (!code) return;
+
+    try {
+      const { url } = await fetchGuestUrl(code);
+      window.location.href = url;
+    } catch {
+      window.location.href = "/?room=" + encodeURIComponent(code);
+    }
+  });
 } else {
   document.getElementById("registerForm").addEventListener("submit", async (e) => {
     e.preventDefault();

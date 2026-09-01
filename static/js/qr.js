@@ -8,32 +8,50 @@ async function initQr() {
     return;
   }
 
-  const baseUrl = await fetchServerBaseUrl();
-  const guestUrl = guestPageUrl(room, baseUrl);
-  document.getElementById("guestUrl").textContent = guestUrl;
-
+  const qrWrap = document.getElementById("qrcode");
+  const guestUrlEl = document.getElementById("guestUrl");
+  const copyBtn = document.getElementById("copyBtn");
   const qrCard = document.querySelector(".qr-card");
-  const hint = document.createElement("p");
-  hint.className = "qr-hint";
-  hint.style.cssText = "color:var(--gray-500);font-size:0.85rem;margin-bottom:1rem;line-height:1.5;";
-  hint.textContent = "Открывайте ссылку через http (не https). iPhone и компьютер должны быть в одной Wi‑Fi.";
-  qrCard.insertBefore(hint, document.getElementById("qrcode"));
 
-  new QRCode(document.getElementById("qrcode"), {
+  const statusEl = document.createElement("p");
+  statusEl.style.cssText = "color:var(--gray-500);font-size:0.9rem;margin-bottom:1rem;line-height:1.5;";
+  statusEl.textContent = "Готовим HTTPS-ссылку для iPhone...";
+  qrCard.insertBefore(statusEl, qrWrap);
+
+  copyBtn.disabled = true;
+  guestUrlEl.textContent = "Подождите...";
+
+  const { url: guestUrl, tunnelReady } = await fetchGuestUrl(room);
+
+  guestUrlEl.textContent = guestUrl;
+  copyBtn.disabled = false;
+
+  statusEl.textContent = tunnelReady
+    ? "QR работает на iPhone и Android (HTTPS)."
+    : "HTTPS-туннель не поднялся. Скопируйте ссылку или код комнаты вручную.";
+
+  new QRCode(qrWrap, {
     text: guestUrl,
-    width: 240,
-    height: 240,
+    width: 260,
+    height: 260,
     colorDark: "#0a0a0a",
     colorLight: "#ffffff",
     correctLevel: QRCode.CorrectLevel.H,
   });
 
-  document.getElementById("copyBtn").addEventListener("click", async () => {
+  const roomBox = document.createElement("div");
+  roomBox.style.cssText = "margin-top:1.25rem;padding:1rem;background:var(--gray-100, #f4f4f5);border-radius:12px;text-align:center;";
+  roomBox.innerHTML = `
+    <p style="color:var(--gray-500);font-size:0.85rem;margin:0 0 0.5rem;">Если QR не открывается на iPhone — введите код:</p>
+    <p style="font-size:1.75rem;font-weight:700;letter-spacing:0.15em;margin:0;">${room}</p>
+    <p style="color:var(--gray-500);font-size:0.8rem;margin:0.75rem 0 0;">Откройте ссылку выше в Safari и введите код</p>`;
+  qrCard.appendChild(roomBox);
+
+  copyBtn.addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText(guestUrl);
-      const btn = document.getElementById("copyBtn");
-      btn.textContent = "Скопировано!";
-      setTimeout(() => (btn.textContent = "Скопировать ссылку"), 2000);
+      copyBtn.textContent = "Скопировано!";
+      setTimeout(() => (copyBtn.textContent = "Скопировать ссылку"), 2000);
     } catch {
       prompt("Скопируйте ссылку:", guestUrl);
     }
@@ -41,9 +59,7 @@ async function initQr() {
 
   const backLink = document.getElementById("backLink");
   if (backLink) {
-    const hostUrl = new URL("host.html", baseUrl + "/");
-    hostUrl.searchParams.set("room", room);
-    backLink.href = hostUrl.href;
+    backLink.href = "host.html?room=" + encodeURIComponent(room);
   }
 }
 

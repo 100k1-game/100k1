@@ -15,7 +15,7 @@ function createRoomId() {
 
 function guestPageUrl(room, baseUrl) {
   const base = (baseUrl || window.location.origin).replace(/\/$/, "");
-  return `${base}/index.html?room=${encodeURIComponent(room)}`;
+  return `${base}/?room=${encodeURIComponent(room)}`;
 }
 
 function qrPageUrl(room) {
@@ -24,22 +24,48 @@ function qrPageUrl(room) {
   return url.href;
 }
 
-let cachedBaseUrl = null;
+let cachedServerInfo = null;
+
+async function fetchServerInfo(maxAttempts = 30) {
+  if (cachedServerInfo) return cachedServerInfo;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const res = await fetch(apiUrl("/api/info"));
+      if (res.ok) {
+        const data = await res.json();
+        if (data.tunnel_ready || attempt >= maxAttempts - 1) {
+          cachedServerInfo = data;
+          return data;
+        }
+      }
+    } catch {
+      /* retry */
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
+  cachedServerInfo = {
+    iphone_url: window.location.origin,
+    base_url: window.location.origin,
+    tunnel_ready: false,
+  };
+  return cachedServerInfo;
+}
+
+async function fetchGuestUrl(room) {
+  const data = await fetchServerInfo();
+  const base = (data.iphone_url || data.base_url).replace(/\/$/, "");
+  return {
+    url: guestPageUrl(room, base),
+    tunnelReady: data.tunnel_ready,
+    roomCode: room,
+  };
+}
 
 async function fetchServerBaseUrl() {
-  if (cachedBaseUrl) return cachedBaseUrl;
-  try {
-    const res = await fetch(apiUrl("/api/info"));
-    if (res.ok) {
-      const data = await res.json();
-      cachedBaseUrl = data.base_url.replace(/\/$/, "");
-      return cachedBaseUrl;
-    }
-  } catch {
-    /* fallback below */
-  }
-  cachedBaseUrl = window.location.origin;
-  return cachedBaseUrl;
+  const data = await fetchServerInfo();
+  return (data.iphone_url || data.base_url).replace(/\/$/, "");
 }
 
 async function joinGuest(room, name, specialty, totalQuestions, guestId = null) {
