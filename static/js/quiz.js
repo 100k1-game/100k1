@@ -30,10 +30,6 @@ const letters = ["A", "B", "C", "D"];
 totalQuestionsEl.textContent = questions.length;
 showQuestion();
 
-function updateHost(data) {
-  sendToHost(room, { type: "update", id: guestId, ...data }).catch(() => {});
-}
-
 function showQuestion() {
   if (currentIndex >= questions.length) {
     finishQuiz();
@@ -59,28 +55,20 @@ function showQuestion() {
   });
 }
 
-function selectAnswer(index, btn, q) {
+async function selectAnswer(index, btn, q) {
   if (answered) return;
   answered = true;
 
   const buttons = optionsList.querySelectorAll(".option-btn");
   buttons.forEach((b) => (b.disabled = true));
 
-  const fullQ = QUIZ_QUESTIONS.find((item) => item.id === q.id);
-  const isCorrect = fullQ && index === fullQ.correct;
-
-  if (isCorrect) {
-    score++;
-    btn.classList.add("correct");
-  } else {
+  try {
+    const data = await submitAnswer(room, guestId, q.id, index);
+    score = data.score;
+    btn.classList.add(data.correct ? "correct" : "incorrect");
+  } catch {
     btn.classList.add("incorrect");
   }
-
-  updateHost({
-    score,
-    current_question: q.id,
-    status: "in_progress",
-  });
 
   setTimeout(() => {
     currentIndex++;
@@ -88,15 +76,11 @@ function selectAnswer(index, btn, q) {
   }, 800);
 }
 
-function finishQuiz() {
+async function finishQuiz() {
   progressFill.style.width = "100%";
   progressLabel.textContent = `${questions.length} / ${questions.length}`;
 
-  updateHost({
-    score,
-    current_question: questions.length,
-    status: "finished",
-  });
+  await finishQuizGuest(room, guestId, score, questions.length);
 
   quizCard.hidden = true;
   resultCard.hidden = false;

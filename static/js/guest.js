@@ -28,28 +28,21 @@ if (!room) {
     startBtn.textContent = "Подключение...";
 
     try {
-      const guestId = generateGuestId();
-      const total = QUIZ_QUESTIONS.length;
+      await ensureApiReady();
 
-      const { conn, peer } = await connectToHost(room);
-      conn.send({
-        type: "join",
-        id: guestId,
-        name,
-        specialty,
-        score: 0,
-        status: "in_progress",
-        current_question: 0,
-        total_questions: total,
-      });
+      const hostReady = await waitForHost(room);
+      if (!hostReady) {
+        throw new Error(
+          "Ведущий не найден. Откройте host.html на компьютере ведущего и дождитесь «Готов принимать гостей»."
+        );
+      }
+
+      const guestId = await joinGuest(room, name, specialty, QUIZ_QUESTIONS.length);
 
       sessionStorage.setItem("guest_id", guestId);
       sessionStorage.setItem("guest_name", name);
       sessionStorage.setItem("guest_specialty", specialty);
       sessionStorage.setItem("room", room);
-
-      conn.close();
-      peer.destroy();
 
       window.location.href = "quiz.html?room=" + encodeURIComponent(room);
     } catch (err) {

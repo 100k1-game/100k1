@@ -4,6 +4,9 @@ let room = params.get("room");
 if (!room) {
   room = createRoomId();
   history.replaceState(null, "", "?room=" + room);
+} else {
+  room = room.trim().toUpperCase();
+  history.replaceState(null, "", "?room=" + room);
 }
 
 document.getElementById("roomCode").textContent = room;
@@ -23,51 +26,41 @@ const STATUS_LABELS = {
   finished: "Завершил",
 };
 
-const guests = {};
 let previousIds = new Set();
 
-const peer = new Peer(hostPeerId(room));
+async function initHost() {
+  const ok = await apiAvailable();
+  if (!ok) {
+    connectionStatus.textContent = "Запустите: python app.py";
+    connectionStatus.classList.remove("connected");
+    guestsTable.innerHTML = `
+      <tr class="empty-row">
+        <td colspan="6">Сначала запустите сервер на компьютере: python app.py</td>
+      </tr>`;
+    return;
+  }
 
-peer.on("open", () => {
-  connectionStatus.innerHTML = '<span class="dot-live"></span> Ожидание гостей';
-  connectionStatus.classList.add("connected");
-});
-
-peer.on("error", () => {
-  connectionStatus.textContent = "Ошибка подключения";
-  connectionStatus.classList.remove("connected");
-});
-
-peer.on("connection", (conn) => {
-  conn.on("data", (data) => {
-    if (data.type === "join") {
-      guests[data.id] = {
-        id: data.id,
-        name: data.name,
-        specialty: data.specialty,
-        score: 0,
-        status: "in_progress",
-        current_question: 0,
-        total_questions: data.total_questions || QUIZ_QUESTIONS.length,
-      };
-    } else if (data.type === "update" && guests[data.id]) {
-      Object.assign(guests[data.id], data);
+  startHostPolling(
+    room,
+    (guests) => renderGuests(guests),
+    (connected, message) => {
+      if (connected) {
+        connectionStatus.innerHTML = '<span class="dot-live"></span> ' + message;
+        connectionStatus.classList.add("connected");
+      } else {
+        connectionStatus.textContent = message;
+        connectionStatus.classList.remove("connected");
+      }
     }
-    renderGuests();
-  });
-});
+  );
+}
 
-function renderGuests() {
-  const list = Object.values(guests).sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    return a.name.localeCompare(b.name, "ru");
-  });
+function renderGuests(guests) {
+  statTotal.textContent = guests.length;
+  statActive.textContent = guests.filter((g) => g.status === "in_progress").length;
+  statFinished.textContent = guests.filter((g) => g.status === "finished").length;
 
-  statTotal.textContent = list.length;
-  statActive.textContent = list.filter((g) => g.status === "in_progress").length;
-  statFinished.textContent = list.filter((g) => g.status === "finished").length;
-
-  if (list.length === 0) {
+  if (guests.length === 0) {
     guestsTable.innerHTML = `
       <tr class="empty-row">
         <td colspan="6">Ожидание участников... Покажите QR-код гостям</td>
@@ -76,9 +69,9 @@ function renderGuests() {
     return;
   }
 
-  const currentIds = new Set(list.map((g) => g.id));
+  const currentIds = new Set(guests.map((g) => g.id));
 
-  guestsTable.innerHTML = list
+  guestsTable.innerHTML = guests
     .map((g, i) => {
       const isNew = !previousIds.has(g.id);
       const progress =
@@ -106,3 +99,5 @@ function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
+
+initHost();
