@@ -52,7 +52,7 @@ def generate_qr(url: str, output: Path) -> None:
 
 def main():
     local_ip = get_local_ip()
-    default_url = f"http://{local_ip}:5000/"
+    default_url = f"http://{local_ip}:8080/index.html"
 
     parser = argparse.ArgumentParser(
         description="Генерация QR-кода для входа гостей на квiz"
