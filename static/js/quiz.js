@@ -1,15 +1,16 @@
 const guestId = sessionStorage.getItem("guest_id");
 const guestName = sessionStorage.getItem("guest_name");
 const guestSpecialty = sessionStorage.getItem("guest_specialty");
+const room = getRoomFromUrl() || sessionStorage.getItem("room");
 
-if (!guestId) {
-  window.location.href = "/";
+if (!guestId || !room) {
+  window.location.href = "index.html";
 }
 
 document.getElementById("playerName").textContent = guestName || "—";
 document.getElementById("playerSpecialty").textContent = guestSpecialty || "—";
 
-let questions = [];
+const questions = QUIZ_QUESTIONS.map(({ id, text, options }) => ({ id, text, options }));
 let currentIndex = 0;
 let score = 0;
 let answered = false;
@@ -26,11 +27,11 @@ const totalQuestionsEl = document.getElementById("totalQuestions");
 
 const letters = ["A", "B", "C", "D"];
 
-async function loadQuestions() {
-  const res = await fetch("/api/questions");
-  questions = await res.json();
-  totalQuestionsEl.textContent = questions.length;
-  showQuestion();
+totalQuestionsEl.textContent = questions.length;
+showQuestion();
+
+function updateHost(data) {
+  sendToHost(room, { type: "update", id: guestId, ...data }).catch(() => {});
 }
 
 function showQuestion() {
@@ -44,7 +45,7 @@ function showQuestion() {
 
   questionNumber.textContent = `Вопрос ${currentIndex + 1}`;
   questionText.textContent = q.text;
-  progressFill.style.width = `${((currentIndex) / questions.length) * 100}%`;
+  progressFill.style.width = `${(currentIndex / questions.length) * 100}%`;
   progressLabel.textContent = `${currentIndex + 1} / ${questions.length}`;
 
   optionsList.innerHTML = "";
@@ -53,41 +54,33 @@ function showQuestion() {
     const btn = document.createElement("button");
     btn.className = "option-btn";
     btn.innerHTML = `<span class="option-letter">${letters[i]}</span><span>${opt}</span>`;
-    btn.addEventListener("click", () => selectAnswer(i, btn));
+    btn.addEventListener("click", () => selectAnswer(i, btn, q));
     optionsList.appendChild(btn);
   });
 }
 
-async function selectAnswer(index, btn) {
+function selectAnswer(index, btn, q) {
   if (answered) return;
   answered = true;
 
-  const q = questions[currentIndex];
   const buttons = optionsList.querySelectorAll(".option-btn");
   buttons.forEach((b) => (b.disabled = true));
 
-  try {
-    const res = await fetch("/api/answer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        guest_id: guestId,
-        question_id: q.id,
-        answer: index,
-      }),
-    });
+  const fullQ = QUIZ_QUESTIONS.find((item) => item.id === q.id);
+  const isCorrect = fullQ && index === fullQ.correct;
 
-    const data = await res.json();
-    score = data.score;
-
-    if (data.correct) {
-      btn.classList.add("correct");
-    } else {
-      btn.classList.add("incorrect");
-    }
-  } catch {
+  if (isCorrect) {
+    score++;
+    btn.classList.add("correct");
+  } else {
     btn.classList.add("incorrect");
   }
+
+  updateHost({
+    score,
+    current_question: q.id,
+    status: "in_progress",
+  });
 
   setTimeout(() => {
     currentIndex++;
@@ -95,15 +88,17 @@ async function selectAnswer(index, btn) {
   }, 800);
 }
 
-async function finishQuiz() {
+function finishQuiz() {
   progressFill.style.width = "100%";
   progressLabel.textContent = `${questions.length} / ${questions.length}`;
 
-  await fetch(`/api/finish/${guestId}`, { method: "POST" });
+  updateHost({
+    score,
+    current_question: questions.length,
+    status: "finished",
+  });
 
   quizCard.hidden = true;
   resultCard.hidden = false;
   finalScore.textContent = score;
 }
-
-loadQuestions();

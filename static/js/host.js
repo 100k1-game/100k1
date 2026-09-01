@@ -1,4 +1,16 @@
-const socket = io();
+const params = new URLSearchParams(window.location.search);
+let room = params.get("room");
+
+if (!room) {
+  room = createRoomId();
+  history.replaceState(null, "", "?room=" + room);
+}
+
+document.getElementById("roomCode").textContent = room;
+
+const qrLink = document.getElementById("qrLink");
+qrLink.href = qrPageUrl(room);
+
 const guestsTable = document.getElementById("guestsTable");
 const statTotal = document.getElementById("statTotal");
 const statActive = document.getElementById("statActive");
@@ -11,40 +23,62 @@ const STATUS_LABELS = {
   finished: "Завершил",
 };
 
+const guests = {};
 let previousIds = new Set();
 
-socket.on("connect", () => {
-  connectionStatus.innerHTML = '<span class="dot-live"></span> Подключено';
+const peer = new Peer(hostPeerId(room));
+
+peer.on("open", () => {
+  connectionStatus.innerHTML = '<span class="dot-live"></span> Ожидание гостей';
   connectionStatus.classList.add("connected");
-  socket.emit("host_join");
 });
 
-socket.on("disconnect", () => {
-  connectionStatus.innerHTML = "Отключено";
+peer.on("error", () => {
+  connectionStatus.textContent = "Ошибка подключения";
   connectionStatus.classList.remove("connected");
 });
 
-socket.on("guests_update", (guests) => {
-  renderGuests(guests);
+peer.on("connection", (conn) => {
+  conn.on("data", (data) => {
+    if (data.type === "join") {
+      guests[data.id] = {
+        id: data.id,
+        name: data.name,
+        specialty: data.specialty,
+        score: 0,
+        status: "in_progress",
+        current_question: 0,
+        total_questions: data.total_questions || QUIZ_QUESTIONS.length,
+      };
+    } else if (data.type === "update" && guests[data.id]) {
+      Object.assign(guests[data.id], data);
+    }
+    renderGuests();
+  });
 });
 
-function renderGuests(guests) {
-  statTotal.textContent = guests.length;
-  statActive.textContent = guests.filter((g) => g.status === "in_progress").length;
-  statFinished.textContent = guests.filter((g) => g.status === "finished").length;
+function renderGuests() {
+  const list = Object.values(guests).sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return a.name.localeCompare(b.name, "ru");
+  });
 
-  if (guests.length === 0) {
+  statTotal.textContent = list.length;
+  statActive.textContent = list.filter((g) => g.status === "in_progress").length;
+  statFinished.textContent = list.filter((g) => g.status === "finished").length;
+
+  if (list.length === 0) {
     guestsTable.innerHTML = `
       <tr class="empty-row">
-        <td colspan="6">Ожидание участников...</td>
+        <td colspan="6">Ожидание участников... Покажите QR-код гостям</td>
       </tr>`;
     previousIds = new Set();
     return;
   }
 
-  const currentIds = new Set(guests.map((g) => g.id));
+  const currentIds = new Set(list.map((g) => g.id));
 
-  guestsTable.innerHTML = guests
+  guestsTable.innerHTML = list
     .map((g, i) => {
       const isNew = !previousIds.has(g.id);
       const progress =
