@@ -12,6 +12,13 @@ async function initQr() {
   const guestUrl = guestPageUrl(room, baseUrl);
   document.getElementById("guestUrl").textContent = guestUrl;
 
+  const qrCard = document.querySelector(".qr-card");
+  const hint = document.createElement("p");
+  hint.className = "qr-hint";
+  hint.style.cssText = "color:var(--gray-500);font-size:0.85rem;margin-bottom:1rem;line-height:1.5;";
+  hint.textContent = "Открывайте ссылку через http (не https). iPhone и компьютер должны быть в одной Wi‑Fi.";
+  qrCard.insertBefore(hint, document.getElementById("qrcode"));
+
   new QRCode(document.getElementById("qrcode"), {
     text: guestUrl,
     width: 240,
