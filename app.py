@@ -45,7 +45,7 @@ def public_base_url() -> str:
     if public:
         return public.rstrip("/")
 
-    scheme = request.headers.get("X-Forwarded-Proto", request.scheme)
+    scheme = "http"
     host = request.host.split(":")[0]
     port = request.environ.get("SERVER_PORT", os.environ.get("PORT", "8080"))
 
@@ -216,8 +216,10 @@ def update_guest(room, guest_id):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
+    local_ip = get_local_ip() or "localhost"
+
     print("\n  Квиз запущен!")
     print(f"  Ведущий: http://localhost:{port}/host.html")
-    print(f"  QR-код:  http://localhost:{port}/qr.html")
-    print("  (для телефонов в Wi-Fi замените localhost на IP компьютера)\n")
+    print(f"  Для iPhone: http://{local_ip}:{port}/host.html")
+    print("  QR-код автоматически использует IP — открывайте только http, не https\n")
     app.run(host="0.0.0.0", port=port, debug=False)
